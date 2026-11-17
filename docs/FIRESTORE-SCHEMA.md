@@ -4,61 +4,67 @@
 > ห้ามสร้าง Collection หรือเขียนข้อมูลจริงตามเอกสารนี้จนกว่าจะได้รับอนุมัติ
 > ทุกเอกสารที่เขียนได้มี stamps ที่เสนอ: `version`, `createdAt`, `createdBy`, `updatedAt`, `updatedBy`
 > ห้ามลบเอกสาร (ใช้ `status` / `active` แทน) — Default Deny
+>
+> **v1.1 (2026-11-17):** ปรับตามมติ N-1–N-6, P-1, P-2, P-5 — รายการที่เปลี่ยนมีเครื่องหมาย (v1.1) และสรุปท้ายเอกสาร
 
 ## Collections (ร่าง)
 
-| Collection / Document ID (ร่าง)                | ระดับ    | ฟิลด์ที่เสนอ                                                                                                                                                           | สิทธิ์อ่าน (นโยบายที่อนุมัติ)                        |
-| --------------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------- |
-| `users/{uid}`                                 | ระบบ    | email, displayName, rank, unitName, role, status, statusReason, assignedZones, allZones, healthAccess, canExport, approvedBy, approvedAt                           | ตนเอง · SA/AD                               |
-| `accessRequests/{uid}`                        | ระบบ    | email, fullName, rank, unitName, reason, requestedRole, status, reviewNote                                                                                         | ตนเอง · SA/AD                               |
-| `zones/{zoneId}`                              | ทั่วไป    | name                                                                                                                                                               | ทุก role ที่ approved (Viewer: OI-8 Pending)   |
-| `lookups/{type}`                              | ทั่วไป    | values[], labels{}                                                                                                                                                 | ทุก role ที่ approved (ยกเว้น healthConditions) |
-| `lookups/healthConditions` หรือ collection แยก | สุขภาพ   | values[], labels{} — **ตำแหน่ง Pending (OI-3)**                                                                                                                     | ผู้มี healthAccess เท่านั้น (H-4)                 |
-| `config/{id}`                                 | ระบบ    | TBD                                                                                                                                                                | `public`: approved · อื่น: SA/AD              |
-| `buildings/{bldId}`                           | ทั่วไป    | name, kind, zoneId, roomCount, dir, corners[4 GeoPoint], legacyName, active                                                                                        | ทุก role ที่ approved                          |
-| `layouts/{id}` + `/versions/{v}`              | ทั่วไป    | GeoJSON string (แบ่งชิ้น)                                                                                                                                             | ทุก role ที่ approved                          |
-| `rooms/{bldId}_{NNN}`                         | ทั่วไป    | buildingId, zoneId, roomNo, code, status, type, note, checked, submitted, currentStayId, occupant{displayName, rank, unitName, since}, openMaintCount, memberCount | ทุก role ที่ approved                          |
-| `stays/{autoId}`                              | ทั่วไป    | roomId, buildingId, zoneId, personId, status, checkIn, checkOut, endReasonCode (C6), position, unitName, subunitName, tags[] (C5), note                            | ทุก role ที่ approved                          |
-| `stayMembers/{autoId}` (C3)                   | ส่วนบุคคล | stayId, roomId, zoneId, name, relation, birthYear, active — **ห้าม key สุขภาพ**                                                                                      | ทุก role ที่ approved (OI-1)                   |
-| `stayPrivate/{stayId}`                        | ส่วนบุคคล | zoneId, roomId, phone — **ไม่มี members**                                                                                                                            | ทุก role ที่ approved (OI-1)                   |
-| `personnel/{autoId}`                          | ทั่วไป    | fullName, rank, unitName, searchKeys[], currentStayId                                                                                                              | ทุก role ที่ approved                          |
-| `vehicles/{autoId}`                           | ส่วนบุคคล | stayId, roomId, zoneId, personId, type, plate, plateKey, province, active                                                                                          | ทุก role ที่ approved                          |
-| `maintenance/{autoId}`                        | ทั่วไป    | roomId, buildingId, zoneId, category (C7), title, detail (ขนาดสูงสุด TBD), status, priority, openedAt, closedAt                                                      | ทุก role ที่ approved                          |
-| `personnelHealth/{stayId}_{subjectId}` (H-S2) | สุขภาพ   | stayId, roomId, zoneId, subjectType (occupant/member), subjectId, conditionCodes[], careLimitations[], active — **ไม่มีข้อความอิสระ (H-3)**                            | SA/AD/OF ที่มี healthAccess · Viewer ไม่ได้      |
-| `auditLogs/{col}_{id}_v{n}`                   | audit   | actorUid, actorName, actorRank, actorRole, action, targetCol, targetId, targetVersion, zoneId, changedFields, statusFrom, statusTo, at — **ไม่มี summary (C2)**      | SA, AD, VW                                  |
-| `userAuditLogs/{col}_{id}_v{n}`               | audit   | actorUid, actorRole, eventCode, targetCol, targetId, targetVersion, changedFields, changes, reasonCode, at (10 keys · OI2-D8)                                      | SA, AD                                      |
-| `healthAuditLogs/personnelHealth_{hid}_v{n}`  | audit   | actorUid, actorName, actorRank, actorRole, action, targetCol, targetId, targetVersion, zoneId, changedFields, at — ไม่มี summary (OB-D8-2 Pending)                   | SA/AD ที่มี healthAccess (K1)                  |
-| `exportLogs/{autoId}`                         | audit   | actorUid, actorName, reportType, filters, rowCount, at (OB-D8-3 Pending)                                                                                           | SA, AD (C1)                                 |
+| Collection / Document ID (ร่าง)                           | ระดับ        | ฟิลด์ที่เสนอ                                                                                                                                                                                                                                                                                                               | สิทธิ์อ่าน (นโยบายที่อนุมัติ)                        |
+| -------------------------------------------------------- | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| `users/{uid}`                                            | ระบบ        | email, displayName, rank, unitName, role, status (**approved / suspended — N-3**), statusReason, assignedZones, allZones, healthAccess, canExport, approvedBy, approvedAt, requestId, requestedRole, requestedAt (**v1.2 — P-8:** คัดลอกจากคำขอใน batch อนุมัติ)                                                           | ตนเอง · SA/AD                               |
+| `accessRequests/{requestId}` (v1.2 · ID ร่าง `{uid}_{n}`) | ระบบ        | uid, email, fullName, rank, unitName, reason, requestedRole, status (**pending / rejected เท่านั้น — N-3**), reviewNote, rejectedBy, rejectedAt, createdAt — **ไม่มีสถานะ approved** · อนุมัติ = ลบคำขอที่ pending ใน batch เดียวกับสร้าง `users` + E1 (P-8) · rejected = เก็บไว้เป็นประวัติ แก้ไม่ได้ · ยื่นใหม่ = สร้างคำขอฉบับใหม่ + E15 (P-9) | ตนเอง (ตาม `uid`) · SA/AD                   |
+| `system/superAdmins` (v1.1 · ร่าง)                        | ระบบ        | uids[], version, updatedAt, updatedBy — ทะเบียน Super Admin ที่ approved (N-6, P-1) · client เขียนได้เฉพาะใน batch เดียวกับการเปลี่ยน role/status ของ SA · ห้ามสร้างจาก client                                                                                                                                                    | SA                                          |
+| `system/bootstrap` (v1.1 · ร่าง)                          | ระบบ        | completed, completedAt — เขียนโดย Admin SDK script ครั้งเดียว (P-5) · client เขียนไม่ได้                                                                                                                                                                                                                                      | SA                                          |
+| `zones/{zoneId}`                                         | ทั่วไป        | name                                                                                                                                                                                                                                                                                                                   | ทุก role ที่ approved (Viewer: OI-8 Pending)   |
+| `lookups/{type}`                                         | ทั่วไป        | values[], labels{}                                                                                                                                                                                                                                                                                                     | ทุก role ที่ approved (ยกเว้น healthConditions) |
+| `lookups/healthConditions` หรือ collection แยก            | สุขภาพ       | values[], labels{} — **ตำแหน่ง Pending (OI-3)**                                                                                                                                                                                                                                                                         | ผู้มี healthAccess เท่านั้น (H-4)                 |
+| `config/{id}`                                            | ระบบ        | TBD                                                                                                                                                                                                                                                                                                                    | `public`: approved · อื่น: SA/AD              |
+| `buildings/{bldId}`                                      | ทั่วไป        | name, kind, zoneId, roomCount, dir, corners[4 GeoPoint], legacyName, active                                                                                                                                                                                                                                            | ทุก role ที่ approved                          |
+| `layouts/{id}` + `/versions/{v}`                         | ทั่วไป        | GeoJSON string (แบ่งชิ้น)                                                                                                                                                                                                                                                                                                 | ทุก role ที่ approved                          |
+| `rooms/{bldId}_{NNN}`                                    | ทั่วไป        | buildingId, zoneId, roomNo, code, status, type, note, checked, submitted, currentStayId, openMaintCount, memberCount (**P-3 Pending**) — **ไม่มี `occupant` (N-4, v1.1)** · ข้อมูลผู้พักดูผ่าน `currentStayId → stays → personnel`                                                                                              | ทุก role ที่ approved                          |
+| `stays/{autoId}`                                         | ทั่วไป        | roomId, buildingId, zoneId, personId, status, checkIn, checkOut, endReasonCode (C6), position, unitName, subunitName, tags[] (C5), note                                                                                                                                                                                | ทุก role ที่ approved                          |
+| `stayMembers/{autoId}` (C3)                              | ส่วนบุคคล     | stayId, roomId, zoneId, name, relation, birthYear, active — **ห้าม key สุขภาพ**                                                                                                                                                                                                                                          | ทุก role ที่ approved (OI-1)                   |
+| `stayPrivate/{stayId}`                                   | ส่วนบุคคล     | zoneId, roomId, phone — **ไม่มี members**                                                                                                                                                                                                                                                                                | ทุก role ที่ approved (OI-1)                   |
+| `personnel/{autoId}`                                     | ทั่วไป        | fullName, rank, unitName, searchKeys[], currentStayId                                                                                                                                                                                                                                                                  | ทุก role ที่ approved                          |
+| `vehicles/{autoId}`                                      | ส่วนบุคคล     | stayId, roomId, zoneId, personId, type, plate, plateKey, province, active                                                                                                                                                                                                                                              | ทุก role ที่ approved                          |
+| `maintenance/{autoId}`                                   | ทั่วไป        | roomId, buildingId, zoneId, category (C7), title, detail (ขนาดสูงสุด TBD), status, priority, openedAt, closedAt                                                                                                                                                                                                          | ทุก role ที่ approved                          |
+| `personnelHealth/{stayId}_{subjectId}` (H-S2)            | สุขภาพ       | stayId, roomId, zoneId, subjectType (occupant/member), subjectId, conditionCodes[], careLimitations[], active — **ไม่มีข้อความอิสระ (H-3)**                                                                                                                                                                                | SA/AD/OF ที่มี healthAccess · Viewer ไม่ได้      |
+| `auditLogs/{col}_{id}_v{n}`                              | audit       | actorUid (**ตัวระบุหลัก — N-5**), actorName, actorRank (**P-4 Pending**), actorRole, action, targetCol (**ห้ามเป็น collection สุขภาพ**), targetId, targetVersion, zoneId, changedFields, statusFrom, statusTo, at — **ไม่มี summary (C2)**                                                                                     | SA, AD, VW                                  |
+| `userAuditLogs/{col}_{id}_v{n}`                          | audit       | actorUid, actorRole, eventCode, targetCol, targetId, targetVersion, changedFields, changes, reasonCode, at (10 keys · OI2-D8)                                                                                                                                                                                          | SA, AD                                      |
+| `healthAuditLogs/personnelHealth_{hid}_v{n}`             | audit       | actorUid (**N-5**), actorName, actorRank, actorRole, action, targetCol, targetId, targetVersion, zoneId, changedFields, at — ไม่มี summary · การตัด actorName/actorRank/zoneId: **P-4 / OB-D8-2 Pending**                                                                                                                 | SA/AD ที่มี healthAccess (K1)                  |
+| `exportLogs/{autoId}`                                    | audit       | actorUid (**N-5**), actorName (**P-4 / OB-D8-3 Pending**), reportType (**allowlist — ห้ามรายงานสุขภาพรายบุคคล N-1**), filters (schema TBD), rowCount, at                                                                                                                                                                  | SA, AD (C1)                                 |
+| `healthStats/{scope}` (v1.1 · ร่าง · **P-6 Pending**)     | สุขภาพ (สถิติ) | ตัวเลขรวมที่ผ่าน suppression แล้ว (ค่า < 5 เก็บเป็น `"<5"` ไม่เก็บตัวเลขจริง — N-2), computedAt · **เขียนโดย Server เท่านั้น** (กลไก: INFRA Pending)                                                                                                                                                                                   | SA/AD/OF ที่มี healthAccess · Viewer ไม่ได้      |
 
 ## userAuditLogs — changes allowlist (ร่าง)
 
-| Key           | ค่า from / to                                                                  | สถานะ                         |
-| ------------- | ----------------------------------------------------------------------------- | ----------------------------- |
-| role          | superAdmin / admin / officer / viewer / null                                  | ร่าง                           |
-| status        | approved / suspended (users) · pending / approved / rejected (accessRequests) | ร่าง                           |
-| healthAccess  | bool / null                                                                   | ร่าง (K3)                      |
-| canExport     | bool / null                                                                   | **Pending OI-6**              |
-| allZones      | bool / null                                                                   | **Pending PD-2**              |
-| assignedZones | list ของ zoneId **หรือ** assignedZonesCount (int)                              | **Pending PD-2 (S-1 ถึง S-4)** |
+| Key           | ค่า from / to                                                                                                                                                                       | สถานะ                         |
+| ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------- |
+| role          | superAdmin / admin / officer / viewer / null                                                                                                                                       | ร่าง                           |
+| status        | users: `null → approved` (E1) · approved ↔ suspended (E5/E6) · accessRequests: `pending → rejected` (E2) · `null → pending` (E15) — **ไม่มี approved ใน accessRequests (N-3, v1.2)** | ร่าง                           |
+| healthAccess  | bool / null                                                                                                                                                                        | ร่าง (K3)                      |
+| canExport     | bool / null                                                                                                                                                                        | **Pending OI-6**              |
+| allZones      | bool / null                                                                                                                                                                        | **Pending PD-2**              |
+| assignedZones | list ของ zoneId **หรือ** assignedZonesCount (int)                                                                                                                                   | **Pending PD-2 (S-1 ถึง S-4)** |
 
 ## Event Codes (ร่าง — รายการสุดท้าย TBD)
 
-| Code | ชื่อ                    | หมายเหตุ                                                  |
-| ---- | --------------------- | -------------------------------------------------------- |
-| E1   | REQUEST_APPROVED      | ร่าง                                                      |
-| E2   | REQUEST_REJECTED      | reasonCode: OI2-D9                                       |
-| E3   | USER_CREATED          | ผูกกับคำขอ: OI2-D10                                        |
-| E4   | ROLE_CHANGED          | ร่าง                                                      |
-| E5   | STATUS_SUSPENDED      | reasonCode: OI2-D9                                       |
-| E6   | STATUS_REINSTATED     | reasonCode: OI2-D9                                       |
-| E7   | HEALTH_ACCESS_GRANTED | Super Admin เท่านั้น (K3)                                   |
-| E8   | HEALTH_ACCESS_REVOKED | Super Admin เท่านั้น (K3)                                   |
-| E9   | EXPORT_GRANTED        | **Pending OI-6 / OI2-D11**                               |
-| E10  | EXPORT_REVOKED        | **Pending OI-6 / OI2-D11**                               |
-| E11  | ZONES_CHANGED         | **Pending PD-2 / OI2-D11**                               |
-| E12  | PROFILE_UPDATED       | ร่าง                                                      |
-| E13  | PROFILE_RENAMED_SELF  | ร่าง                                                      |
-| E14  | PERMISSIONS_CHANGED   | **Selected for Design (OI2-D7-A, D7-Q1-A) — ไม่มี status** |
+| Code | ชื่อ                    | หมายเหตุ                                                                                                                                            |
+| ---- | --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| E1   | REQUEST_APPROVED      | ร่าง · (v1.2) targetCol=`users` · changes: status `null→approved`, role `null→<role>` · batch เดียวกับสร้าง users และลบคำขอ (P-8)                      |
+| E2   | REQUEST_REJECTED      | reasonCode: OI2-D9 · (v1.2) targetCol=`accessRequests` · changes: status `pending→rejected`                                                        |
+| E3   | USER_CREATED          | ผูกกับคำขอ: OI2-D10                                                                                                                                  |
+| E4   | ROLE_CHANGED          | ร่าง                                                                                                                                                |
+| E5   | STATUS_SUSPENDED      | reasonCode: OI2-D9                                                                                                                                 |
+| E6   | STATUS_REINSTATED     | reasonCode: OI2-D9                                                                                                                                 |
+| E7   | HEALTH_ACCESS_GRANTED | Super Admin เท่านั้น (K3)                                                                                                                             |
+| E8   | HEALTH_ACCESS_REVOKED | Super Admin เท่านั้น (K3)                                                                                                                             |
+| E9   | EXPORT_GRANTED        | **Pending OI-6 / OI2-D11**                                                                                                                         |
+| E10  | EXPORT_REVOKED        | **Pending OI-6 / OI2-D11**                                                                                                                         |
+| E11  | ZONES_CHANGED         | **Pending PD-2 / OI2-D11**                                                                                                                         |
+| E12  | PROFILE_UPDATED       | ร่าง                                                                                                                                                |
+| E13  | PROFILE_RENAMED_SELF  | ร่าง                                                                                                                                                |
+| E14  | PERMISSIONS_CHANGED   | **Selected for Design (OI2-D7-A, D7-Q1-A) — ไม่มี status**                                                                                           |
+| E15  | REQUEST_RESUBMITTED   | (v1.2 · ร่าง · P-9) ผู้ถูก rejected ยื่นคำขอฉบับใหม่ · actorUid = ผู้ยื่น · targetCol=`accessRequests` · changes: status `null→pending` · ชื่อและเลขรหัสสุดท้าย TBD |
 
 ## รายการค่า (ทั้งหมด TBD)
 
@@ -67,4 +73,34 @@
 - `stayTags`: TBD (C5 · ความหมายแท็ก "ชนอ." ยังไม่ทราบ)
 - `endReasonCode`: TBD (C6)
 - `maintCategories` และขนาด `detail`: TBD (C7)
-- `reasonCode`: TBD (OI2-D9)
+- `reasonCode`: TBD (OI2-D9) — รวมรหัสสำหรับการระงับฉุกเฉินของ Super Admin (P-1 / P-1a)
+- `exportReportTypes` (v1.1): TBD — ต้องไม่มีรายงานสุขภาพรายบุคคล (N-1) · รายงานสถิติสุขภาพต้องใช้ `canExport` + `healthAccess` (P-2)
+
+## Export (v1.1)
+
+| ประเภท           | เงื่อนไข                                                                                                  |
+| ---------------- | ------------------------------------------------------------------------------------------------------- |
+| ข้อมูลทั่วไป         | `canExport=true` · ไม่ใช่ Viewer · ขอบเขตของ Officer: P-O1 Pending                                        |
+| สถิติสุขภาพรวม      | `canExport=true` **และ** `healthAccess=true` · ไม่ใช่ Viewer · ใช้ค่าจาก Server ที่ผ่าน suppression (N-2, P-2) |
+| ข้อมูลสุขภาพรายบุคคล | **ห้ามทุกกรณี (N-1)**                                                                                      |
+
+## Workflow คำขอใช้งาน (v1.2 — N-3, P-8, P-9)
+
+| ขั้นตอน       | ผู้ทำ                    | สิ่งที่เกิดใน batch เดียวกัน                                                                                                                                                         |
+| ----------- | ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ยื่นคำขอ      | ผู้สมัคร (ตนเอง)          | สร้างคำขอ `status=pending` (บังคับ) · ห้ามมี `users/{uid}` อยู่แล้ว · ห้ามมีคำขอ pending ค้างอยู่                                                                                          |
+| ปฏิเสธ       | SA/AD                  | `pending → rejected` + rejectedBy/rejectedAt + userAuditLogs E2 · คำขอที่ rejected แก้ไขหรือลบไม่ได้ (เป็นประวัติ)                                                                     |
+| ยื่นใหม่ (P-9) | ผู้สมัคร (ตนเอง)          | สร้างคำขอ**ฉบับใหม่** `status=pending` (ฉบับก่อนหน้าต้องเป็น rejected) + userAuditLogs E15 · **ผู้ใช้เปลี่ยน status ของคำขอใด ๆ เองไม่ได้**                                                  |
+| อนุมัติ (P-8)  | SA/AD (ตามขอบเขต role) | สร้าง `users/{uid}` `status=approved` + approvedBy/approvedAt + คัดลอก requestId/requestedRole/requestedAt + userAuditLogs E1 + **ลบคำขอที่ pending** (ข้อยกเว้นหลักห้ามลบ เฉพาะกรณีนี้) |
+
+- ข้อยกเว้นการลบ (P-8) ใช้ได้เมื่อ Rules ยืนยันด้วย `getAfter()` ว่ามี `users/{uid}` สถานะ approved และ E1 ที่อ้างถึงใน batch เดียวกันเท่านั้น · ลบคำขอที่ rejected ไม่ได้
+- ไม่คัดลอกข้อความอิสระ (`reason`, `reviewNote`) ไปยัง `users` (OI2-OB1 Pending)
+- รายละเอียด Rules ยังเป็นข้อเสนอ — ต้องผ่าน Emulator Tests ก่อนใช้งาน
+
+## ประวัติการเปลี่ยนแปลง
+
+| Version | การเปลี่ยนแปลง                                                                                                                                                                                                                            |
+| ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| v1.0    | ร่าง Schema จาก Security Design v6–v6.6 (Phase 1.5)                                                                                                                                                                                      |
+| v1.2    | N-3: ตัด `approved` ออกจาก accessRequests ทั้งหมด · P-8: อนุมัติ = สร้าง users (คัดลอก requestId/requestedRole/requestedAt) + E1 + ลบคำขอ pending ใน batch เดียว · P-9: ยื่นใหม่เป็นคำขอฉบับใหม่ (ID ร่าง `{uid}_{n}`) + E15 · ผู้ใช้เปลี่ยนสถานะคำขอเองไม่ได้ |
+| v1.1    | N-3 ระบุสถานะใน users / accessRequests · N-4 ตัด `rooms.occupant` · N-5 actorUid เป็นตัวระบุหลัก · N-6/P-1/P-5 เพิ่ม `system/superAdmins`, `system/bootstrap` (ร่าง) · N-1/N-2/P-2 ตาราง Export และ `healthStats` (ร่าง, P-6 Pending)             |

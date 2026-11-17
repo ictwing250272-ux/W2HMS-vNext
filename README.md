@@ -19,7 +19,7 @@
 
 ## ความต้องการของระบบ
 
-- Node.js 22 ขึ้นไป (ดู `.nvmrc`)
+- Node.js 24 (≥ 24.12.0) ขึ้นไป (ดู `.nvmrc`) — `@firebase/rules-unit-testing` และ `firebase` ต้องการ Node ≥ 24.12.0
 - npm 10 ขึ้นไป
 - (เฉพาะเมื่อรัน Emulator) Java 11+ สำหรับ Firestore Emulator
 
@@ -41,17 +41,18 @@ npm run dev
 
 ## คำสั่งที่ใช้บ่อย
 
-| คำสั่ง                   | หน้าที่                                                          |
-| ---------------------- | ------------------------------------------------------------- |
-| `npm run dev`          | Dev server                                                    |
-| `npm run typecheck`    | ตรวจชนิดข้อมูล (TypeScript strict)                               |
-| `npm run lint`         | ESLint (typescript-eslint strict + กฎกัน XSS)                  |
-| `npm run format:check` | ตรวจรูปแบบโค้ดด้วย Prettier (`npm run format` เพื่อแก้)             |
-| `npm test`             | Unit tests (Vitest + Testing Library)                         |
-| `npm run build`        | Typecheck + production build ไปที่ `dist/` (ไม่ deploy)          |
-| `npm run preview`      | เปิด build ที่ <http://127.0.0.1:4173/W2HMS-vNext/>              |
-| `npm run check`        | รันทุกขั้นตอนข้างบนตามลำดับ                                         |
-| `npm run emulators`    | Firebase Emulator (Auth + Firestore) ด้วย project `demo-w2hms` |
+| คำสั่ง                   | หน้าที่                                                               |
+| ---------------------- | ------------------------------------------------------------------ |
+| `npm run dev`          | Dev server                                                         |
+| `npm run typecheck`    | ตรวจชนิดข้อมูล (TypeScript strict)                                    |
+| `npm run lint`         | ESLint (typescript-eslint strict + กฎกัน XSS)                       |
+| `npm run format:check` | ตรวจรูปแบบโค้ดด้วย Prettier (`npm run format` เพื่อแก้)                  |
+| `npm test`             | Unit tests (Vitest + Testing Library)                              |
+| `npm run build`        | Typecheck + production build ไปที่ `dist/` (ไม่ deploy)               |
+| `npm run preview`      | เปิด build ที่ <http://127.0.0.1:4173/W2HMS-vNext/>                   |
+| `npm run check`        | รันทุกขั้นตอนข้างบนตามลำดับ                                              |
+| `npm run emulators`    | Firebase Emulator (Auth + Firestore) ด้วย project `demo-w2hms`      |
+| `npm run test:rules`   | ทดสอบ Firestore Rules บน Emulator (`demo-w2hms` เท่านั้น · ต้องมี Java) |
 
 ## Environment Configuration
 
@@ -76,7 +77,7 @@ npm run dev
 npm run emulators
 ```
 
-- ใช้ `firebase-tools` ผ่าน `npx` (ไม่ติดตั้งเป็น dependency)
+- `firebase-tools` ติดตั้งเป็น devDependency แบบระบุเวอร์ชัน (15.34.2) — ไม่ใช้ `npx --yes`
 - `.firebaserc` ชี้ไปที่ `demo-w2hms` ซึ่งเป็น demo project ที่ไม่ติดต่อ Firebase จริง
 - `firestore.rules` เป็น **placeholder แบบ deny-all** สำหรับ Emulator เท่านั้น ไม่ใช่ Rules สำหรับใช้งานจริง
 - Emulator UI: <http://127.0.0.1:4000>

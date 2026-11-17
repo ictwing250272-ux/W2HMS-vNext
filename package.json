@@ -5,7 +5,7 @@
   "description": "W2HMS vNext - Wing 2 Housing Management System (next generation)",
   "type": "module",
   "engines": {
-    "node": ">=22"
+    "node": ">=24.12.0"
   },
   "scripts": {
     "dev": "vite",
@@ -18,8 +18,9 @@
     "format:check": "prettier --check .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "emulators": "npx --yes firebase-tools@15.36.0 emulators:start --only auth,firestore --project demo-w2hms",
-    "check": "npm run format:check && npm run lint && npm run typecheck && npm run test && npm run build"
+    "emulators": "firebase emulators:start --only auth,firestore --project demo-w2hms",
+    "check": "npm run format:check && npm run lint && npm run typecheck && npm run test && npm run build",
+    "test:rules": "firebase emulators:exec --only firestore --project demo-w2hms \"vitest run --root tests/rules\""
   },
   "dependencies": {
     "firebase": "13.4.0",
@@ -30,6 +31,7 @@
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
+    "@firebase/rules-unit-testing": "6.0.0",
     "@testing-library/jest-dom": "7.0.1",
     "@testing-library/react": "16.3.3",
     "@types/leaflet": "1.9.22",
@@ -40,6 +42,7 @@
     "eslint": "10.15.0",
     "eslint-plugin-react-hooks": "7.1.1",
     "eslint-plugin-react-refresh": "0.5.8",
+    "firebase-tools": "15.34.2",
     "globals": "17.14.0",
     "jsdom": "31.0.1",
     "prettier": "3.10.1",
