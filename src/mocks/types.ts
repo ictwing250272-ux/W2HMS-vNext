@@ -10,6 +10,7 @@ export type RoomStatus = 'unknown' | 'vacant' | 'occupied' | 'repair' | 'closed'
 export type StayStatus = 'active' | 'ended';
 export type TicketStatus = 'open' | 'inProgress' | 'done' | 'cancelled';
 export type VehicleType = 'car' | 'motorcycle';
+export type AgeGroup = 'child' | 'youth' | 'adult' | 'senior' | 'unknown';
 
 export interface Zone {
   id: string;
@@ -52,6 +53,8 @@ export interface Stay {
   phone: string;
   /** Count only; individual stayMembers are not shown in the prototype. */
   memberCount: number;
+  /** Age group per co-resident (length === memberCount). Used for aggregate charts only. */
+  memberAgeGroups: AgeGroup[];
 }
 
 export interface Vehicle {

@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 import { createMockDataset, mockData } from './data';
-import { countRoomsByStatus, occupancyRate } from './selectors';
+import { createSiteLayout } from './layout';
+import { countRoomsByStatus, filterByZone, occupancyRate, tally } from './selectors';
 
 describe('mock dataset', () => {
   it('is deterministic for the same seed', () => {
@@ -45,5 +46,54 @@ describe('mock dataset', () => {
     expect(occupancyRate(mockData.rooms)).toBeGreaterThanOrEqual(0);
     expect(occupancyRate(mockData.rooms)).toBeLessThanOrEqual(100);
     expect(occupancyRate([])).toBe(0);
+  });
+
+  it('keeps the Phase 1.6 dataset stable after adding co-resident age groups', () => {
+    expect(mockData.rooms).toHaveLength(54);
+    expect(mockData.stays).toHaveLength(37);
+    expect(mockData.vehicles).toHaveLength(38);
+    for (const s of mockData.stays) expect(s.memberAgeGroups).toHaveLength(s.memberCount);
+  });
+
+  it('tallies with a fixed order (zeros kept) or by count descending', () => {
+    expect(tally(['b', 'a', 'b'], (x) => x)).toEqual([
+      { key: 'b', label: 'b', count: 2 },
+      { key: 'a', label: 'a', count: 1 },
+    ]);
+    expect(tally(['a'], (x) => x, { order: ['z', 'a'], labels: { z: 'Z' } })).toEqual([
+      { key: 'z', label: 'Z', count: 0 },
+      { key: 'a', label: 'a', count: 1 },
+    ]);
+  });
+
+  it('filters room-scoped collections by zone', () => {
+    const all = filterByZone(mockData, '');
+    expect(all.rooms).toHaveLength(mockData.rooms.length);
+    const z1 = filterByZone(mockData, 'z01');
+    expect(z1.rooms.every((r) => r.zoneId === 'z01')).toBe(true);
+    const z1Rooms = new Set(z1.rooms.map((r) => r.id));
+    expect(z1.stays.every((s) => z1Rooms.has(s.roomId))).toBe(true);
+    expect(z1.vehicles.every((v) => z1Rooms.has(v.roomId))).toBe(true);
+  });
+
+  it('builds a synthetic plan layout with one non-overlapping shape per room', () => {
+    const layout = createSiteLayout(mockData);
+    expect(layout.rooms).toHaveLength(mockData.rooms.length);
+    expect(layout.zones).toHaveLength(mockData.zones.length);
+    const boxes = layout.rooms.map((r) => r.bounds);
+    for (let i = 0; i < boxes.length; i++) {
+      for (let j = i + 1; j < boxes.length; j++) {
+        const [[ay1, ax1], [ay2, ax2]] = boxes[i] ?? [
+          [0, 0],
+          [0, 0],
+        ];
+        const [[by1, bx1], [by2, bx2]] = boxes[j] ?? [
+          [0, 0],
+          [0, 0],
+        ];
+        const overlap = ax1 < bx2 && bx1 < ax2 && ay1 < by2 && by1 < ay2;
+        expect(overlap).toBe(false);
+      }
+    }
   });
 });

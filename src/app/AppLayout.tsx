@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { NavLink } from 'react-router-dom';
 
+import { SummaryPanel } from '../components/SummaryPanel';
 import { getConfig } from '../config/env';
 import type { Role } from '../mocks/types';
 import { ROLE_LABEL } from './permissions';
@@ -78,28 +79,27 @@ export function AppLayout({ children }: { children: ReactNode }) {
           DEV — ต้นแบบ UI ใช้ข้อมูลจำลองเท่านั้น · บทบาทจำลองไม่ใช่การควบคุมสิทธิ์จริง
         </div>
       )}
-      <div className="shell">
-        <aside className="sidebar">
-          <div className="brand">W2HMS vNext</div>
-          <nav aria-label="เมนูหลัก">
-            <ul>
-              {NAV_ITEMS.map((item) => (
-                <li key={item.to}>
-                  <NavLink
-                    to={item.to}
-                    className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}
-                  >
-                    {item.label}
-                  </NavLink>
-                </li>
-              ))}
-            </ul>
-          </nav>
-        </aside>
-        <div className="content">
-          <MockRoleSwitcher />
-          <main className="main">{children}</main>
-        </div>
+      <header className="topbar">
+        <div className="brand">W2HMS</div>
+        <nav aria-label="เมนูหลัก" className="topnav">
+          <ul>
+            {NAV_ITEMS.map((item) => (
+              <li key={item.to}>
+                <NavLink
+                  to={item.to}
+                  className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}
+                >
+                  {item.label}
+                </NavLink>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      </header>
+      <MockRoleSwitcher />
+      <div className="workspace">
+        <main className="main">{children}</main>
+        <SummaryPanel />
       </div>
     </div>
   );

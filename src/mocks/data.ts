@@ -7,6 +7,7 @@
  */
 import type {
   AccessRequest,
+  AgeGroup,
   AppUser,
   Building,
   HealthAggregate,
@@ -39,6 +40,18 @@ function pick<T>(items: readonly T[], random: () => number): T {
   return item;
 }
 
+const AGE_GROUPS: readonly AgeGroup[] = [
+  'child',
+  'child',
+  'youth',
+  'adult',
+  'adult',
+  'adult',
+  'adult',
+  'senior',
+  'unknown',
+];
+
 const pad = (n: number, width: number) => String(n).padStart(width, '0');
 
 const RANKS = ['พล.อ.ต.', 'น.อ.', 'น.ท.', 'น.ต.', 'ร.อ.', 'ร.ท.', 'พ.อ.อ.', 'พ.อ.ท.', 'จ.อ.'];
@@ -56,6 +69,8 @@ const TICKET_TITLES = [
 
 export function createMockDataset(seed = 2026): MockDataset {
   const random = createRandom(seed);
+  // Separate stream so adding co-resident ages does not change the other generated values.
+  const ageRandom = createRandom(seed + 1);
 
   const zones: Zone[] = [
     { id: 'z01', name: 'เขต 1 (ทดสอบ)' },
@@ -120,14 +135,18 @@ export function createMockDataset(seed = 2026): MockDataset {
           rank: pick(RANKS, random),
           unitName: pick(UNITS, random),
         });
+        // Draw order (checkIn, then memberCount) is kept stable so the seeded dataset does not shift.
+        const checkIn = `2025-${pad(1 + Math.floor(random() * 12), 2)}-${pad(1 + Math.floor(random() * 28), 2)}`;
+        const memberCount = Math.floor(random() * 5);
         stays.push({
           id: stayId,
           roomId,
           personId,
           status: 'active',
-          checkIn: `2025-${pad(1 + Math.floor(random() * 12), 2)}-${pad(1 + Math.floor(random() * 28), 2)}`,
+          checkIn,
           phone: `000-000-${pad(index, 4)}`,
-          memberCount: Math.floor(random() * 5),
+          memberCount,
+          memberAgeGroups: Array.from({ length: memberCount }, () => pick(AGE_GROUPS, ageRandom)),
         });
         room.currentStayId = stayId;
 

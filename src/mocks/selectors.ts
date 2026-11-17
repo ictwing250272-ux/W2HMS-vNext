@@ -1,4 +1,4 @@
-import type { MockDataset, Room, RoomStatus } from './types';
+import type { AgeGroup, MockDataset, Room, RoomStatus } from './types';
 
 export const ROOM_STATUS_LABEL: Record<RoomStatus, string> = {
   occupied: 'มีผู้พัก',
@@ -52,4 +52,64 @@ export function matches(query: string, ...fields: (string | undefined)[]): boole
   const q = query.trim().toLowerCase();
   if (q === '') return true;
   return fields.some((f) => f?.toLowerCase().includes(q) ?? false);
+}
+
+export const AGE_GROUP_LABEL: Record<AgeGroup, string> = {
+  child: 'เด็ก (0–12)',
+  youth: 'เยาวชน (13–24)',
+  adult: 'วัยทำงาน (25–59)',
+  senior: 'ผู้สูงอายุ (60+)',
+  unknown: 'ไม่ระบุอายุ',
+};
+
+export const AGE_GROUPS: readonly AgeGroup[] = ['child', 'youth', 'adult', 'senior', 'unknown'];
+
+export interface Tally {
+  key: string;
+  label: string;
+  count: number;
+}
+
+/**
+ * Count items by key. With `order`, every listed key appears (zero counts included) in that
+ * order; otherwise keys are sorted by count descending, then label.
+ */
+export function tally<T>(
+  items: readonly T[],
+  keyOf: (item: T) => string,
+  options: { order?: readonly string[]; labels?: Readonly<Record<string, string>> } = {},
+): Tally[] {
+  const counts = new Map<string, number>();
+  for (const key of options.order ?? []) counts.set(key, 0);
+  for (const item of items) {
+    const key = keyOf(item);
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  const rows = [...counts].map(([key, count]) => ({
+    key,
+    label: options.labels?.[key] ?? key,
+    count,
+  }));
+  if (options.order === undefined) {
+    rows.sort((a, b) => b.count - a.count || a.label.localeCompare(b.label, 'th'));
+  }
+  return rows;
+}
+
+/** Restrict the dataset's room-scoped collections to one zone ('' = all zones). */
+export function filterByZone(data: MockDataset, zoneId: string) {
+  if (zoneId === '') {
+    return { rooms: data.rooms, stays: data.stays, vehicles: data.vehicles, tickets: data.tickets };
+  }
+  const roomIds = new Set(data.rooms.filter((r) => r.zoneId === zoneId).map((r) => r.id));
+  return {
+    rooms: data.rooms.filter((r) => roomIds.has(r.id)),
+    stays: data.stays.filter((s) => roomIds.has(s.roomId)),
+    vehicles: data.vehicles.filter((v) => roomIds.has(v.roomId)),
+    tickets: data.tickets.filter((t) => roomIds.has(t.roomId)),
+  };
+}
+
+export function isOpenTicket(t: { status: string }): boolean {
+  return t.status === 'open' || t.status === 'inProgress';
 }
