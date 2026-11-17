@@ -1,0 +1,12 @@
+rules_version = '2';
+
+// PHASE 1 PLACEHOLDER — DENY ALL.
+// For the local Firebase Emulator only. This is NOT the production rule set.
+// Production rules follow Security Design v6.6 and are pending approval (Phase 2+).
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -1,0 +1,61 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+coverage/
+*.tsbuildinfo
+
+# Environment files — never commit real values
+.env
+.env.*
+!.env.example
+
+# Firebase local state / credentials — never commit
+.firebase/
+emulator-data/
+firebase-debug*.log
+firestore-debug*.log
+ui-debug*.log
+*-service-account*.json
+serviceAccount*.json
+*credentials*.json
+# Default filename of Firebase Admin SDK service-account keys
+*-firebase-adminsdk-*.json
+
+# Private keys / certificates — never commit
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Real or exported data — never commit (use synthetic fixtures only)
+data/
+exports/
+# Spreadsheets / tabular exports
+*.csv
+*.tsv
+*.xlsx
+*.xls
+*.ods
+# Map / GIS exports (legacy W2HMS exports layouts as KML/GPX/GeoJSON)
+*.kml
+*.kmz
+*.gpx
+*.geojson
+
+# Backups — never commit
+backup/
+backups/
+*.bak
+*.backup
+*~
+
+# Logs / OS / editor
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
