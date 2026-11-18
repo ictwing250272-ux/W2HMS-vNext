@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { canEditGeneral, canExport } from '../app/permissions';
+import { can } from '../app/permissions';
 import { useMockSession } from '../app/sessionContext';
 import { EmptyRow, PageHeader, ProtoAction, SearchInput, StatCard } from '../components/ui';
 import { mockData } from '../mocks/data';
@@ -24,8 +24,8 @@ export function VehiclesPage() {
         title="ข้อมูลยานพาหนะ"
         actions={
           <>
-            {canEditGeneral(session) && <ProtoAction>เพิ่มยานพาหนะ</ProtoAction>}
-            {canExport(session) && <ProtoAction>ส่งออก</ProtoAction>}
+            {can(session, 'vehicles', 'create') && <ProtoAction>เพิ่มยานพาหนะ</ProtoAction>}
+            {can(session, 'vehicles', 'export') && <ProtoAction>ส่งออก</ProtoAction>}
           </>
         }
       />

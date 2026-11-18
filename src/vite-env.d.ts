@@ -11,6 +11,9 @@ interface ImportMetaEnv {
   readonly VITE_FIREBASE_EMULATOR_HOST?: string;
   readonly VITE_FIREBASE_AUTH_EMULATOR_PORT?: string;
   readonly VITE_FIREBASE_FIRESTORE_EMULATOR_PORT?: string;
+  readonly VITE_GOOGLE_MAPS_API_KEY?: string;
+  readonly VITE_MAP_ORIGIN_LAT?: string;
+  readonly VITE_MAP_ORIGIN_LNG?: string;
 }
 
 interface ImportMeta {

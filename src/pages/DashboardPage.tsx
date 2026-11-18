@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 
-import { canSeeHealthAggregates } from '../app/permissions';
+import { canSeeHealthAggregates, suppressSmall } from '../app/permissions';
 import { useMockSession } from '../app/sessionContext';
 import { BarList, StackedBars, type StackSeries } from '../components/charts';
 import { PageHeader, StatCard } from '../components/ui';
@@ -249,19 +249,22 @@ function VehiclesTab({ zoneId }: { zoneId: string }) {
  * Not split by zone on purpose: small per-zone counts could identify individuals.
  */
 function HealthTab() {
-  const rows = mockData.healthAggregates.map((h) => ({
-    key: h.label,
-    label: h.label,
-    count: h.count,
-  }));
   return (
     <div data-testid="health-aggregate">
       <p className="notice">
-        แสดงเฉพาะผู้มี healthAccess · ตัวเลขรวมทั้งหน่วยเท่านั้น ไม่มีรายชื่อ ห้อง หรือการแยกเขต (H-5) ·
-        รายการกลุ่มโรคยังไม่อนุมัติ (TBD)
+        แสดงเฉพาะผู้มี healthAccess หรือ Commander Group · ตัวเลขรวมทั้งหน่วยเท่านั้น ไม่มีรายชื่อ ห้อง
+        หรือการแยกเขต (H-5) · จำนวนน้อยกว่า 5 แสดงเป็น &lt;5 (N-2) · รายการกลุ่มโรคยังไม่อนุมัติ (TBD)
       </p>
-      <div className="chart-grid">
-        <BarList title="สรุปข้อมูลสุขภาพ (ตัวเลขรวม)" tone="tertiary" rows={rows} />
+      <div className="card">
+        <h3>สรุปข้อมูลสุขภาพ (ตัวเลขรวม)</h3>
+        <dl className="summary-kv">
+          {mockData.healthAggregates.map((h) => (
+            <Fragment key={h.label}>
+              <dt>{h.label}</dt>
+              <dd>{suppressSmall(h.count)}</dd>
+            </Fragment>
+          ))}
+        </dl>
       </div>
     </div>
   );

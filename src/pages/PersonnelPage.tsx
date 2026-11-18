@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { canEditGeneral, canExport } from '../app/permissions';
+import { can } from '../app/permissions';
 import { useMockSession } from '../app/sessionContext';
 import { EmptyRow, PageHeader, ProtoAction, SearchInput } from '../components/ui';
 import { mockData } from '../mocks/data';
@@ -30,8 +30,8 @@ export function PersonnelPage() {
         description={`ผู้พักปัจจุบัน ${String(rows.length)} คน`}
         actions={
           <>
-            {canEditGeneral(session) && <ProtoAction>เพิ่มกำลังพล</ProtoAction>}
-            {canExport(session) && <ProtoAction>ส่งออก</ProtoAction>}
+            {can(session, 'personnel', 'create') && <ProtoAction>เพิ่มกำลังพล</ProtoAction>}
+            {can(session, 'personnel', 'export') && <ProtoAction>ส่งออก</ProtoAction>}
           </>
         }
       />

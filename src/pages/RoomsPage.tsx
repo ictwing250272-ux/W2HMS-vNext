@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { canEditGeneral, canExport } from '../app/permissions';
+import { can } from '../app/permissions';
 import { useMockSession } from '../app/sessionContext';
 import { EmptyRow, PageHeader, ProtoAction, RoomStatusBadge, SearchInput } from '../components/ui';
 import { mockData } from '../mocks/data';
@@ -30,8 +30,8 @@ export function RoomsPage() {
         description={`${String(rows.length)} จาก ${String(mockData.rooms.length)} ห้อง`}
         actions={
           <>
-            {canEditGeneral(session) && <ProtoAction>เพิ่มข้อมูล</ProtoAction>}
-            {canExport(session) && <ProtoAction>ส่งออก</ProtoAction>}
+            {can(session, 'housing', 'create') && <ProtoAction>เพิ่มข้อมูล</ProtoAction>}
+            {can(session, 'housing', 'export') && <ProtoAction>ส่งออก</ProtoAction>}
           </>
         }
       />

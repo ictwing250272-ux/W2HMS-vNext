@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { canEditGeneral } from '../app/permissions';
+import { can } from '../app/permissions';
 import { useMockSession } from '../app/sessionContext';
 import {
   EmptyRow,
@@ -27,7 +27,7 @@ export function MaintenancePage() {
     <section>
       <PageHeader
         title="งานซ่อมบำรุง"
-        actions={canEditGeneral(session) && <ProtoAction>แจ้งซ่อม</ProtoAction>}
+        actions={can(session, 'maintenance', 'create') && <ProtoAction>แจ้งซ่อม</ProtoAction>}
       />
 
       <div className="stat-grid">

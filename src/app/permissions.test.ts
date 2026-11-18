@@ -1,64 +1,102 @@
 import { describe, expect, it } from 'vitest';
 
-import type { Role } from '../mocks/types';
+import type { AppUser, Role } from '../mocks/types';
 import {
-  canDelete,
-  canEditGeneral,
-  canExport,
+  ACTIONS,
+  can,
+  canEditHealth,
   canManageUsers,
   canReadAuditLogs,
   canSeeHealthAggregates,
-  normaliseSession,
-  type MockSession,
+  canViewHealth,
+  checkAccessEdit,
+  emptyGrants,
+  fullGrants,
+  MODULES,
+  normaliseUser,
+  presetGrants,
+  suppressSmall,
 } from './permissions';
 
-const s = (role: Role, healthAccess = false, exportFlag = false): MockSession => ({
-  role,
-  healthAccess,
-  canExport: exportFlag,
-});
-
-describe('UI permission helpers mirror the approved policy', () => {
-  it('Viewer is read-only; other roles can edit general data', () => {
-    expect(canEditGeneral(s('viewer'))).toBe(false);
-    expect(canEditGeneral(s('officer'))).toBe(true);
-    expect(canEditGeneral(s('admin'))).toBe(true);
-    expect(canEditGeneral(s('superAdmin'))).toBe(true);
+const u = (role: Role, extra: Partial<AppUser> = {}): AppUser =>
+  normaliseUser({
+    uid: `u_${role}`,
+    displayName: role,
+    email: `${role}@example.test`,
+    role,
+    status: 'approved',
+    healthAccess: false,
+    commanderGroup: false,
+    grants: emptyGrants(),
+    ...extra,
   });
 
-  it('no role can delete', () => {
-    expect(canDelete()).toBe(false);
+describe('UI permission model (Super Admin / Staff / Viewer)', () => {
+  it('Super Admin has every applicable grant', () => {
+    const sa = u('superAdmin');
+    for (const m of MODULES) expect(can(sa, m, 'view')).toBe(true);
+    expect(can(sa, 'housing', 'delete')).toBe(true);
+    expect(can(sa, 'auditLogs', 'delete')).toBe(false); // not applicable
   });
 
-  it('only Super Admin and Admin manage users', () => {
-    expect(canManageUsers(s('superAdmin'))).toBe(true);
-    expect(canManageUsers(s('admin'))).toBe(true);
-    expect(canManageUsers(s('officer'))).toBe(false);
-    expect(canManageUsers(s('viewer'))).toBe(false);
+  it('Viewer is read-only in every module, even if grants claim otherwise', () => {
+    const viewer = u('viewer', { grants: fullGrants(), healthAccess: true });
+    for (const m of MODULES) {
+      expect(can(viewer, m, 'view')).toBe(true);
+      for (const a of ACTIONS.filter((x) => x !== 'view')) expect(can(viewer, m, a)).toBe(false);
+    }
+    expect(viewer.healthAccess).toBe(false);
   });
 
-  it('Officer cannot read general audit logs; Viewer can', () => {
-    expect(canReadAuditLogs(s('officer'))).toBe(false);
-    expect(canReadAuditLogs(s('viewer'))).toBe(true);
-    expect(canReadAuditLogs(s('admin'))).toBe(true);
+  it('Staff gets exactly the grants set by the Super Admin', () => {
+    const staff = u('staff', { grants: presetGrants('operator') });
+    expect(can(staff, 'housing', 'update')).toBe(true);
+    expect(can(staff, 'housing', 'delete')).toBe(false);
+    expect(can(staff, 'housing', 'export')).toBe(false);
+    expect(canReadAuditLogs(staff)).toBe(false);
+
+    const grants = presetGrants('operator');
+    grants.maintenance.delete = true;
+    expect(can(u('staff', { grants }), 'maintenance', 'delete')).toBe(true);
   });
 
-  it('health aggregates need healthAccess and are never shown to Viewer', () => {
-    expect(canSeeHealthAggregates(s('officer', true))).toBe(true);
-    expect(canSeeHealthAggregates(s('officer', false))).toBe(false);
-    expect(canSeeHealthAggregates(s('admin', false))).toBe(false);
-    expect(canSeeHealthAggregates(s('superAdmin', false))).toBe(false);
-    expect(canSeeHealthAggregates(s('viewer', true))).toBe(false);
+  it('a suspended account can do nothing', () => {
+    const s = u('superAdmin', { status: 'suspended', healthAccess: true });
+    expect(can(s, 'housing', 'view')).toBe(false);
+    expect(canManageUsers(s)).toBe(false);
+    expect(canViewHealth(s)).toBe(false);
   });
 
-  it('export needs canExport and is never allowed for Viewer', () => {
-    expect(canExport(s('officer', false, true))).toBe(true);
-    expect(canExport(s('admin', false, false))).toBe(false);
-    expect(canExport(s('viewer', false, true))).toBe(false);
+  it('only Super Admin manages users', () => {
+    expect(canManageUsers(u('superAdmin'))).toBe(true);
+    expect(canManageUsers(u('staff', { grants: fullGrants() }))).toBe(false);
+    expect(canManageUsers(u('viewer'))).toBe(false);
   });
 
-  it('normaliseSession strips healthAccess/canExport from Viewer', () => {
-    expect(normaliseSession(s('viewer', true, true))).toEqual(s('viewer'));
-    expect(normaliseSession(s('officer', true, true))).toEqual(s('officer', true, true));
+  it('health: healthAccess reads + writes; Commander Group reads only; Viewer alone never', () => {
+    expect(canViewHealth(u('staff', { healthAccess: true }))).toBe(true);
+    expect(canEditHealth(u('staff', { healthAccess: true }))).toBe(true);
+    expect(canViewHealth(u('staff'))).toBe(false);
+    expect(canViewHealth(u('superAdmin'))).toBe(false); // not automatic by role
+
+    const commander = u('viewer', { commanderGroup: true });
+    expect(canViewHealth(commander)).toBe(true);
+    expect(canEditHealth(commander)).toBe(false);
+    expect(canSeeHealthAggregates(commander)).toBe(true);
+
+    expect(canViewHealth(u('viewer', { healthAccess: true }))).toBe(false);
+  });
+
+  it('access edits: Super Admin only, never on their own account', () => {
+    const sa = u('superAdmin');
+    expect(checkAccessEdit(sa, u('staff')).ok).toBe(true);
+    expect(checkAccessEdit(sa, sa).ok).toBe(false);
+    expect(checkAccessEdit(u('staff', { grants: fullGrants() }), u('viewer')).ok).toBe(false);
+  });
+
+  it('suppresses small health counts', () => {
+    expect(suppressSmall(0)).toBe('0');
+    expect(suppressSmall(3)).toBe('<5');
+    expect(suppressSmall(5)).toBe('5');
   });
 });

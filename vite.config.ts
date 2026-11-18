@@ -20,14 +20,21 @@ const DEFAULT_BASE_PATH = '/W2HMS-vNext/';
  * is 'self' only. When Phase 2 wires up Firebase, add the exact endpoints it uses
  * (e.g. https://firestore.googleapis.com, https://identitytoolkit.googleapis.com,
  * https://securetoken.googleapis.com) — never wildcards, loopback or ws:// hosts.
+ *
+ * Map: the Google Map Tiles API is reached only at https://tile.googleapis.com (session +
+ * viewport JSON via fetch, tile images via <img>). The Maps JavaScript API is NOT used because
+ * it would require 'unsafe-inline' / 'unsafe-eval' or per-request nonces (not possible on
+ * GitHub Pages).
  */
+const MAP_TILES_ORIGIN = 'https://tile.googleapis.com';
+
 const PRODUCTION_CSP_DIRECTIVES = [
   "default-src 'self'",
   "script-src 'self'",
   "style-src 'self'",
-  "img-src 'self' data:",
+  `img-src 'self' data: ${MAP_TILES_ORIGIN}`,
   "font-src 'self'",
-  "connect-src 'self'",
+  `connect-src 'self' ${MAP_TILES_ORIGIN}`,
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
